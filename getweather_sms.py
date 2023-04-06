@@ -36,13 +36,12 @@ def weather_emoji(weather):
     return ' '.join(emoji_list)
 
 
-
 load_dotenv()
 weather_api_key = os.getenv("WEATHER_API_KEY")
 twilio_account_sid = os.getenv("TWILIO_ACCOUNT_SID")
 twilio_auth_token = os.getenv("TWILIO_AUTH_TOKEN")
 twilio_phone_number = os.getenv("TWILIO_PHONE_NUMBER")
-destination_phone_number = os.getenv("DESTINATION_PHONE_NUMBER")
+destination_phone_numbers = os.getenv("DESTINATION_PHONE_NUMBERS")
 
 if len(sys.argv) > 1:
     zip_code = sys.argv[1]
@@ -81,15 +80,15 @@ if response.status_code == 200:
         sms_body += f"Conditions: {weather['narrative']}\n"
         sms_body += f"Emojis: {weather_emoji(weather)}\n\n"
   
-    # Send a single SMS message with all three forecasts
+    # Send a single SMS message to multiple phone numbers
     twilio_client = Client(twilio_account_sid, twilio_auth_token)
-    message = twilio_client.messages.create(
-        body=sms_body,
-        from_=twilio_phone_number,
-        to=destination_phone_number
-    )
-    
-    print(f"Message sent with ID: {message.sid}")
+    for destination_phone_number in destination_phone_numbers.split(','):
+        message = twilio_client.messages.create(
+            body=sms_body,
+            from_=twilio_phone_number,
+            to=destination_phone_number.strip()
+        )
+        print(f"Message sent to {destination_phone_number.strip()} with ID: {message.sid}")
 
 else:
     print(f"Could not get weather information. Status code: {response.status_code}, response text: {response.text}")
